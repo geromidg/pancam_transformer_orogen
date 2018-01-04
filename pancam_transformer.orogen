@@ -1,0 +1,23 @@
+name 'pancam_transformer'
+
+import_types_from 'base'
+
+task_context 'Task' do
+    needs_configuration
+
+    input_port('pitch', 'double').
+        doc('Tilt angle of the PanCam in degrees')
+
+    input_port('yaw', 'double').
+        doc('Pan angle of the PanCam in degrees')
+
+    output_port('transformation', '/base/samples/RigidBodyState').
+        doc 'Transformation from PanCam sensor to robot frame'
+
+    transformer do
+        align_port 'yaw'
+        max_latency 0
+
+    port_driven 'yaw'
+end
+
