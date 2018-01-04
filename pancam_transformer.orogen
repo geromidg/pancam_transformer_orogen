@@ -5,6 +5,9 @@ import_types_from 'base'
 task_context 'Task' do
     needs_configuration
 
+    property('pitchOffset', 'double', -25.0).
+        doc 'Offset in pitch'
+
     input_port('pitch', 'double').
         doc('Tilt angle of the PanCam in degrees')
 
@@ -14,10 +17,6 @@ task_context 'Task' do
     output_port('transformation', '/base/samples/RigidBodyState').
         doc 'Transformation from PanCam sensor to robot frame'
 
-    transformer do
-        align_port 'yaw'
-        max_latency 0
-
-    port_driven 'yaw'
+    periodic 0.02
 end
 
