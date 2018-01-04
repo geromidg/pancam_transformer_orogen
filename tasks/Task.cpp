@@ -30,6 +30,9 @@ void Task::updateHook(void) {
 
     base::samples::RigidBodyState transformation;
     transformation.setTransform(sensorToBodyTF);
+    transformation.sourceFrame = "left_camera_pancam";
+    transformation.targetFrame = "body";
+    transformation.time = base::Time::now();
     _transformation.write(transformation);
 }
 
