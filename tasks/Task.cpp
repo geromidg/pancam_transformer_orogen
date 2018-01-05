@@ -32,6 +32,14 @@ bool Task::configureHook(void) {
 void Task::updateHook(void) {
     TaskBase::updateHook();
 
+    calculateSensorToBodyTF();
+
+    transformation_.setTransform(sensorToBodyTF_);
+    transformation_.time = base::Time::now();
+    _transformation.write(transformation_);
+}
+
+void Task::calculateSensorToBodyTF(void) {
     double motorPitch, motorYaw;
 
     if (_pitch.read(motorPitch) != RTT::NewData) return;
@@ -48,13 +56,7 @@ void Task::updateHook(void) {
                     Eigen::Vector3d::UnitX()));
 
     motorToBodyTF_.linear() = motorToBodyQuaternion.toRotationMatrix();
-
-    Eigen::Affine3d sensorToBodyTF = motorToBodyTF_ * sensorToMotorTF_;
-
-    base::samples::RigidBodyState transformation;
-    transformation.setTransform(sensorToBodyTF);
-    transformation.time = base::Time::now();
-    _transformation.write(transformation);
+    sensorToBodyTF_ = motorToBodyTF_ * sensorToMotorTF_;
 }
 
 }  // namespace pancam_transformer

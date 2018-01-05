@@ -10,15 +10,20 @@ class Task : public TaskBase {
             : TaskBase(name) {}
 
   protected:
-    bool configureHook(void);
+    bool configureHook(void) override;
 
-    void updateHook(void);
+    void updateHook(void) override;
+
+    void calculateSensorToBodyTF(void);
 
   protected:
     Eigen::Vector3d motorToBodyRotation_;
 
     Eigen::Affine3d sensorToMotorTF_;
     Eigen::Affine3d motorToBodyTF_;
+    Eigen::Affine3d sensorToBodyTF_;
+
+    base::samples::RigidBodyState transformation_;
 };
 
 }  // namespace pancam_transformer
