@@ -2,36 +2,57 @@
 
 namespace pancam_transformer {
 
+bool Task::configureHook(void) {
+    if (!TaskBase::configureHook()) return false;
+
+    const auto& sensorToMotorRotation = _sensorToMotorRotation.rvalue();
+    const auto& sensorToMotorTranslation = _sensorToMotorTranslation.rvalue();
+    const auto& motorToBodyTranslation = _motorToBodyTranslation.rvalue();
+
+    motorToBodyRotation_ = _motorToBodyRotation.get();
+
+    Eigen::Quaterniond sensorToMotorQuaternion = Eigen::Quaterniond(
+            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(0),
+                    Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(sensorToMotorRotation(1),
+                    Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(2),
+                    Eigen::Vector3d::UnitX()));
+
+    sensorToMotorTF_ = Eigen::Affine3d::Identity();
+    sensorToMotorTF_.translation() = sensorToMotorTranslation;
+    sensorToMotorTF_.linear() = sensorToMotorQuaternion.toRotationMatrix();
+
+    motorToBodyTF_ = Eigen::Affine3d::Identity();
+    motorToBodyTF_.translation() = motorToBodyTranslation;
+
+    return true;
+}
+
 void Task::updateHook(void) {
     TaskBase::updateHook();
 
-    double ptu_pitch, ptu_yaw;
-    _pitch.read(ptu_pitch);
-    _yaw.read(ptu_yaw);
-    ptu_pitch = (180 - ptu_pitch)/2;
-    ptu_pitch -= 2 * 12.5;
-    ptu_pitch = ptu_pitch/180.0*M_PI;
-    ptu_yaw = ptu_yaw/180.0*M_PI;
+    double motorPitch, motorYaw;
 
-    Eigen::Quaterniond camera_orientation = Eigen::Quaterniond(
-            Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d::UnitZ()) *
-            Eigen::AngleAxisd(0., Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(-M_PI/2, Eigen::Vector3d::UnitX()));
-    Eigen::Vector3d camera_to_ptu(0.01, 0.25, 0.055);
-    Eigen::Quaterniond ptu_orientation = Eigen::Quaterniond(
-            Eigen::AngleAxisd(ptu_yaw + 0., Eigen::Vector3d::UnitZ()) *
-            Eigen::AngleAxisd(ptu_pitch - 0.05, Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(0., Eigen::Vector3d::UnitX()));
-    Eigen::Vector3d ptu_to_body(0.138, -0.005, 1.286);
-    Eigen::Translation3d ptu2Bd(ptu_to_body);
-    Eigen::Translation3d cam2ptu(camera_to_ptu);
-    Eigen::Affine3d sensorToBodyTF =
-            ptu2Bd * ptu_orientation * cam2ptu * camera_orientation;
+    if (_pitch.read(motorPitch) != RTT::NewData) return;
+    if (_yaw.read(motorYaw) != RTT::NewData) return;
+
+    motorPitch = (180. - motorPitch) / 2. + _motorPitchOffset.rvalue();
+
+    Eigen::Quaterniond motorToBodyQuaternion = Eigen::Quaterniond(
+            Eigen::AngleAxisd(motorYaw * M_PI/180. + motorToBodyRotation_(0),
+                    Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(motorPitch * M_PI/180. + motorToBodyRotation_(1),
+                    Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(motorToBodyRotation_(2),
+                    Eigen::Vector3d::UnitX()));
+
+    motorToBodyTF_.linear() = motorToBodyQuaternion.toRotationMatrix();
+
+    Eigen::Affine3d sensorToBodyTF = motorToBodyTF_ * sensorToMotorTF_;
 
     base::samples::RigidBodyState transformation;
     transformation.setTransform(sensorToBodyTF);
-    transformation.sourceFrame = "left_camera_pancam";
-    transformation.targetFrame = "body";
     transformation.time = base::Time::now();
     _transformation.write(transformation);
 }

@@ -10,7 +10,15 @@ class Task : public TaskBase {
             : TaskBase(name) {}
 
   protected:
+    bool configureHook(void);
+
     void updateHook(void);
+
+  protected:
+    Eigen::Vector3d motorToBodyRotation_;
+
+    Eigen::Affine3d sensorToMotorTF_;
+    Eigen::Affine3d motorToBodyTF_;
 };
 
 }  // namespace pancam_transformer

@@ -5,17 +5,32 @@ import_types_from 'base'
 task_context 'Task' do
     needs_configuration
 
-    property('pitchOffset', 'double', -25.0).
-        doc 'Offset in pitch'
+    ####### Properties #######
+    property('motorPitchOffset', 'double').
+        doc 'Pitch offset of motor (PTU) in degrees'
 
+    property('sensorToMotorRotation', '/base/Vector3d').
+        doc 'Rotation from sensor frame to motor frame'
+
+    property('sensorToMotorTranslation', '/base/Vector3d').
+        doc 'Translation from sensor frame to motor frame'
+
+    property('motorToBodyRotation', '/base/Vector3d').
+        doc 'Rotation from motor frame to body frame'
+
+    property('motorToBodyTranslation', '/base/Vector3d').
+        doc 'Translation from motor frame to body frame'
+
+    ####### Input Ports #######
     input_port('pitch', 'double').
         doc('Tilt angle of the PanCam in degrees')
 
     input_port('yaw', 'double').
         doc('Pan angle of the PanCam in degrees')
 
+    ####### Output Ports #######
     output_port('transformation', '/base/samples/RigidBodyState').
-        doc 'Transformation from PanCam sensor to robot frame'
+        doc 'Transformation from PanCam sensor frame to robot frame'
 
     periodic 0.02
 end
