@@ -12,11 +12,11 @@ bool Task::configureHook(void) {
     motorToBodyRotation_ = _motorToBodyRotation.get();
 
     Eigen::Quaterniond sensorToMotorQuaternion = Eigen::Quaterniond(
-            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(0),
+            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(2),
                     Eigen::Vector3d::UnitZ()) *
             Eigen::AngleAxisd(sensorToMotorRotation(1),
                     Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(2),
+            Eigen::AngleAxisd(-M_PI / 2 + sensorToMotorRotation(0),
                     Eigen::Vector3d::UnitX()));
 
     sensorToMotorTF_ = Eigen::Affine3d::Identity();
@@ -48,11 +48,11 @@ void Task::calculateSensorToBodyTF(void) {
     motorPitch = (180. - motorPitch) / 2. + _motorPitchOffset.rvalue();
 
     Eigen::Quaterniond motorToBodyQuaternion = Eigen::Quaterniond(
-            Eigen::AngleAxisd(motorYaw * M_PI/180. + motorToBodyRotation_(0),
+            Eigen::AngleAxisd(motorYaw * M_PI/180. + motorToBodyRotation_(2),
                     Eigen::Vector3d::UnitZ()) *
             Eigen::AngleAxisd(motorPitch * M_PI/180. + motorToBodyRotation_(1),
                     Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(motorToBodyRotation_(2),
+            Eigen::AngleAxisd(motorToBodyRotation_(0),
                     Eigen::Vector3d::UnitX()));
 
     motorToBodyTF_.linear() = motorToBodyQuaternion.toRotationMatrix();
